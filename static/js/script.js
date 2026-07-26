@@ -12,9 +12,19 @@
   const THEME_KEY = "postsignal_theme";
   const MAX_HISTORY = 5;
 
-  // The frontend is a standalone file (opened directly from disk), so it
-  // must call the Flask API by its full address rather than a relative path.
-  const API_BASE_URL = "https://postora-j62g.onrender.com";
+  // Primary & fallback backend endpoints
+  const LOCAL_API_URL = "http://127.0.0.1:5000";
+  const PROD_API_URL = "https://postora-j62g.onrender.com";
+
+  function getApiEndpoints() {
+    const endpoints = [];
+    if (window.location.protocol.startsWith("http")) {
+      endpoints.push(window.location.origin);
+    }
+    endpoints.push(LOCAL_API_URL);
+    endpoints.push(PROD_API_URL);
+    return [...new Set(endpoints)];
+  }
 
   /* ------------------------------ Elements ------------------------------ */
   const els = {
@@ -160,40 +170,46 @@
   async function generatePost(payload) {
     setLoading(true);
 
+    const endpoints = getApiEndpoints();
+    let lastErrorMsg = "";
+
     try {
-      const res = await fetch(`${API_BASE_URL}/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      for (const baseUrl of endpoints) {
+        try {
+          const res = await fetch(`${baseUrl}/generate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Unexpected response from server.");
+          let data;
+          try {
+            data = await res.json();
+          } catch {
+            throw new Error(`Invalid JSON response from backend (${res.status})`);
+          }
+
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || `Server error (${res.status})`);
+          }
+
+          lastGeneratedPost = data.post;
+          renderOutput(data.post);
+          saveToHistory(payload, data.post);
+          showToast("Post generated successfully.", "success");
+          return;
+        } catch (err) {
+          lastErrorMsg = err.message || "Failed to generate post.";
+          console.warn(`Attempt to call ${baseUrl}/generate failed:`, err);
+        }
       }
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Something went wrong. Please try again.");
-      }
-
-      lastGeneratedPost = data.post;
-      renderOutput(data.post);
-      saveToHistory(payload, data.post);
-      showToast("Post generated successfully.", "success");
-    } catch (err) {
-      if (err instanceof TypeError) {
-        // fetch() throws a plain TypeError ("Failed to fetch") on network errors,
-        // which almost always means the Flask backend isn't running yet.
-        showToast(`Can't reach the backend at ${API_BASE_URL}. Make sure "python app.py" is running.`, "error", 5000);
-      } else {
-        showToast(err.message || "Failed to generate post.", "error");
-      }
+      showToast(lastErrorMsg || "Failed to reach backend API. Make sure python app.py is running.", "error", 5000);
     } finally {
       setLoading(false);
     }
   }
+
 
   function setLoading(isLoading) {
     els.generateBtn.disabled = isLoading;

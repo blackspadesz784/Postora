@@ -38,7 +38,8 @@ app = Flask(__name__)
 CORS(app, resources={r"/generate": {"origins": "*"}})
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+FALLBACK_MODELS = ["gemini-flash-latest", "gemini-2.0-flash-lite", "gemini-2.0-flash"]
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
@@ -138,40 +139,51 @@ def generate():
 
     prompt = build_prompt(topic, description, tone, post_type, length)
 
-    try:
-        model = genai.GenerativeModel(GEMINI_MODEL_NAME)
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.9,
-                top_p=0.95,
-                max_output_tokens=1024,
-            ),
-        )
+    models_to_try = [GEMINI_MODEL_NAME]
+    for fallback in FALLBACK_MODELS:
+        if fallback not in models_to_try:
+            models_to_try.append(fallback)
 
-        post_text = (getattr(response, "text", "") or "").strip()
+    last_error = None
+    for model_name in models_to_try:
+        try:
+            logger.info("Attempting generation with model '%s'", model_name)
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.9,
+                    top_p=0.95,
+                    max_output_tokens=1024,
+                ),
+            )
 
-        if not post_text:
-            logger.error("Gemini returned an empty response for topic=%s", topic)
-            return jsonify({
-                "success": False,
-                "error": "The AI did not return any content. Please try again."
-            }), 502
+            post_text = (getattr(response, "text", "") or "").strip()
+            if post_text:
+                return jsonify({"success": True, "post": post_text})
 
-        return jsonify({"success": True, "post": post_text})
+            logger.warning("Model '%s' returned empty output", model_name)
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            logger.warning("Generation with model '%s' failed: %s", model_name, exc)
+            msg = str(exc)
+            if "API key not valid" in msg or "API_KEY_INVALID" in msg:
+                break
 
-    except Exception as exc:  # noqa: BLE001 — surface a clean message to the client
-        logger.exception("Gemini generation failed")
-        message = str(exc)
+    message = str(last_error) if last_error else "Empty response from Gemini models"
+    logger.error("Gemini generation failed: %s", message)
 
-        if "API key not valid" in message or "API_KEY_INVALID" in message:
-            friendly = "Your Gemini API key is invalid. Please check your .env file."
-        elif "quota" in message.lower() or "rate" in message.lower():
-            friendly = "The AI service is rate-limited or out of quota. Please try again shortly."
-        else:
-            friendly = "Something went wrong while generating your post. Please try again."
+    if "API key not valid" in message or "API_KEY_INVALID" in message:
+        friendly = "Your Gemini API key is invalid. Please check your .env file."
+    elif "quota" in message.lower() or "rate" in message.lower() or "resourceexhausted" in message.lower():
+        friendly = "The AI service rate limit or quota was exceeded. Please try again shortly."
+    elif "not found" in message.lower() or "no longer available" in message.lower():
+        friendly = "The configured Gemini model is unavailable. Please check your GEMINI_MODEL setting in .env."
+    else:
+        friendly = f"Something went wrong while generating your post: {message}"
 
-        return jsonify({"success": False, "error": friendly}), 502
+    return jsonify({"success": False, "error": friendly}), 502
+
 
 
 @app.errorhandler(404)
