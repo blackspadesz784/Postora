@@ -1,5 +1,5 @@
 /* =========================================================================
-   AI LinkedIn Post Generator — Frontend logic
+   Postora — Frontend logic
    Handles: theme toggle, form validation & counters, API calls,
    rendering full responses, clipboard/download, localStorage history, toasts.
    ========================================================================= */

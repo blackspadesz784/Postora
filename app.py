@@ -1,5 +1,5 @@
 """
-AI LinkedIn Post Generator — Flask Backend
+Postora — Flask Backend
 --------------------------------------------
 Runs as a standalone JSON API (CORS-enabled) that builds a well-structured
 prompt and forwards it to the Google Gemini API to produce a ready-to-post

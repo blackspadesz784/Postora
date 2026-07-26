@@ -1,4 +1,4 @@
-# AI LinkedIn Post Generator
+# Postora
 
 A premium, dark-themed, fully responsive LinkedIn post generator. Vanilla
 HTML/CSS/JS frontend, Flask backend, Google Gemini API for generation.
