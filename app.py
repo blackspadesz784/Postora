@@ -7,7 +7,7 @@ LinkedIn update.
 
 The frontend (index.html) is a fully static file — open it directly by
 double-clicking it, or serve it any way you like. It talks to this API at
-http://127.0.0.1:5000.
+https://postora-j62g.onrender.com.
 
 Setup:
     1. pip install -r requirements.txt

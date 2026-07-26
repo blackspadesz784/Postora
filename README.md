@@ -43,7 +43,7 @@ linkedin-post-generator/
    ```bash
    python app.py
    ```
-   This starts the API on `http://127.0.0.1:5000`. Leave this terminal running.
+   This starts the API on `https://postora-j62g.onrender.com`. Leave this terminal running.
 
 5. Open the frontend — just **double-click `index.html`** (or right-click →
    Open with → your browser). It calls the API at `127.0.0.1:5000` automatically.
@@ -56,7 +56,7 @@ linkedin-post-generator/
 `app.py` no longer renders `index.html` as a template — it's a pure JSON
 API with CORS enabled on `/generate`, so a page opened from `file://`
 (or any other origin) is allowed to call it. `script.js` targets the API
-by its full address (`http://127.0.0.1:5000`) instead of a relative path,
+by its full address (`https://postora-j62g.onrender.com`) instead of a relative path,
 which is required once the page isn't being served by Flask itself.
 
 If `index.html` shows a toast saying it can't reach the backend, it almost

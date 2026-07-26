@@ -14,7 +14,7 @@
 
   // The frontend is a standalone file (opened directly from disk), so it
   // must call the Flask API by its full address rather than a relative path.
-  const API_BASE_URL = "http://127.0.0.1:5000";
+  const API_BASE_URL = "https://postora-j62g.onrender.com";
 
   /* ------------------------------ Elements ------------------------------ */
   const els = {
