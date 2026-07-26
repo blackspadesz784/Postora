@@ -8,8 +8,8 @@
   "use strict";
 
   /* ----------------------------- Constants ----------------------------- */
-  const HISTORY_KEY = "postsignal_history_v1";
-  const THEME_KEY = "postsignal_theme";
+  const HISTORY_KEY = "Postora_history_v1";
+  const THEME_KEY = "Postora_theme";
   const MAX_HISTORY = 5;
 
   // Primary & fallback backend endpoints
