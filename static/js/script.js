@@ -1,7 +1,7 @@
 /* =========================================================================
    AI LinkedIn Post Generator — Frontend logic
    Handles: theme toggle, form validation & counters, API calls,
-   typing animation, clipboard/download, localStorage history, toasts.
+   rendering full responses, clipboard/download, localStorage history, toasts.
    ========================================================================= */
 
 (() => {
@@ -58,7 +58,6 @@
     toastContainer: document.getElementById("toastContainer"),
   };
 
-  let currentTypingTimer = null;
   let lastGeneratedPost = "";
 
   /* ============================== THEME ============================== */
@@ -210,48 +209,20 @@
     }
   }
 
-
   function setLoading(isLoading) {
     els.generateBtn.disabled = isLoading;
     els.generateBtn.classList.toggle("is-loading", isLoading);
-    els.regenerateBtn && (els.regenerateBtn.disabled = isLoading);
+    if (els.regenerateBtn) {
+      els.regenerateBtn.disabled = isLoading;
+    }
   }
 
   /* ============================== OUTPUT RENDER ============================== */
   function renderOutput(text) {
     els.outputEmpty.hidden = true;
     els.outputResult.hidden = false;
-    typeText(text);
-  }
-
-  function typeText(text) {
-    if (currentTypingTimer) {
-      clearInterval(currentTypingTimer);
-      currentTypingTimer = null;
-    }
-
-    els.postText.textContent = "";
-    const cursor = document.createElement("span");
-    cursor.className = "typing-cursor";
-    els.postText.appendChild(cursor);
-
-    let i = 0;
-    const speed = text.length > 500 ? 4 : 12; // chars per tick, faster for long posts
-    updateOutputCounters("");
-
-    currentTypingTimer = setInterval(() => {
-      const chunk = text.slice(i, i + speed);
-      cursor.insertAdjacentText("beforebegin", chunk);
-      i += speed;
-      updateOutputCounters(els.postText.textContent);
-
-      if (i >= text.length) {
-        clearInterval(currentTypingTimer);
-        currentTypingTimer = null;
-        cursor.remove();
-        updateOutputCounters(text);
-      }
-    }, 12);
+    els.postText.textContent = text;
+    updateOutputCounters(text);
   }
 
   /* ============================== ACTIONS ============================== */
@@ -289,9 +260,9 @@
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const stamp = new Date().toISOString().slice(0, 10);
+    const dateStr = new Date().toISOString().split("T")[0];
     a.href = url;
-    a.download = `linkedin-post-${stamp}.txt`;
+    a.download = `linkedin-post-${dateStr}.txt`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -335,7 +306,7 @@
       post,
       createdAt: new Date().toISOString(),
     });
-    const trimmed = history.slice(0, MAX_HISTORY);
+    const trimmed = history.filter((_, idx) => idx < MAX_HISTORY);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
     renderHistory();
   }
@@ -365,7 +336,6 @@
 
     history.forEach((item) => {
       const node = els.historyItemTemplate.content.cloneNode(true);
-      const card = node.querySelector(".history-card");
       node.querySelector(".history-card__type").textContent = item.post_type;
       node.querySelector(".history-card__date").textContent = formatDate(item.createdAt);
       node.querySelector(".history-card__preview").textContent = item.post;
@@ -373,7 +343,7 @@
       node.querySelector('[data-action="load"]').addEventListener("click", () => {
         loadHistoryItem(item);
       });
-      node.querySelector('[data-action="copy"]').addEventListener("click", async (e) => {
+      node.querySelector('[data-action="copy"]').addEventListener("click", async () => {
         try {
           await navigator.clipboard.writeText(item.post);
           showToast("Post copied to clipboard.", "success", 2000);
@@ -399,7 +369,6 @@
     lastGeneratedPost = item.post;
     els.outputEmpty.hidden = true;
     els.outputResult.hidden = false;
-    if (currentTypingTimer) clearInterval(currentTypingTimer);
     els.postText.textContent = item.post;
     updateOutputCounters(item.post);
 

@@ -4,16 +4,6 @@ AI LinkedIn Post Generator — Flask Backend
 Runs as a standalone JSON API (CORS-enabled) that builds a well-structured
 prompt and forwards it to the Google Gemini API to produce a ready-to-post
 LinkedIn update.
-
-The frontend (index.html) is a fully static file — open it directly by
-double-clicking it, or serve it any way you like. It talks to this API at
-https://postora-j62g.onrender.com.
-
-Setup:
-    1. pip install -r requirements.txt
-    2. Copy .env.example to .env and add your GEMINI_API_KEY
-    3. python app.py                 (starts the API on port 5000)
-    4. Double-click index.html to open the frontend in your browser
 """
 
 import os
@@ -33,8 +23,7 @@ logger = logging.getLogger("linkedin-post-generator")
 
 app = Flask(__name__)
 
-# Allow the standalone index.html (opened via file:// or any static server)
-# to call this API from a different origin.
+# Allow the standalone index.html to call this API from any origin
 CORS(app, resources={r"/generate": {"origins": "*"}})
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -49,7 +38,6 @@ else:
         "until a valid key is added to your .env file."
     )
 
-# Allowed values — mirrored on the frontend, re-validated here for safety.
 VALID_TONES = {"Professional", "Casual", "Technical", "Motivational", "Inspirational"}
 VALID_POST_TYPES = {
     "Project Showcase", "Achievement", "Internship", "Certification",
@@ -58,9 +46,9 @@ VALID_POST_TYPES = {
 VALID_LENGTHS = {"Short", "Medium", "Long"}
 
 LENGTH_GUIDE = {
-    "Short": "120-160 words, 2-3 short paragraphs",
-    "Medium": "180-260 words, 3-5 short paragraphs",
-    "Long": "280-400 words, 5-7 short paragraphs with more depth and storytelling",
+    "Short": "180-250 words (800-1200 characters), 3-4 short paragraphs",
+    "Medium": "180-250 words (800-1200 characters), 3-5 short paragraphs",
+    "Long": "180-250 words (800-1200 characters), 4-6 short paragraphs with storytelling",
 }
 
 
@@ -72,25 +60,29 @@ def build_prompt(topic: str, description: str, tone: str, post_type: str, length
     length_instruction = LENGTH_GUIDE.get(length, LENGTH_GUIDE["Medium"])
 
     return f"""You are an expert LinkedIn content writer and personal branding specialist.
-Generate an engaging, professional, human-like LinkedIn post based on the provided
-topic, description, tone, post type, and length. Start with a compelling hook,
-explain the topic clearly, include valuable insights, use short paragraphs, add
-relevant emojis only where appropriate, end with a question or call-to-action,
-and generate 8-12 relevant hashtags. The content should be original, engaging,
-and ready to post on LinkedIn. Return only the LinkedIn post without any
-additional explanation.
+Generate a complete, engaging, professional, human-like LinkedIn post based on the provided topic, description, tone, post type, and length.
+
+Target output length: 180–250 words (800–1200 characters). ({length_instruction})
+
+Structure requirements:
+1. Start with a compelling hook.
+2. Explain the topic clearly with valuable insights and details.
+3. Use short, readable paragraphs separated by blank line breaks.
+4. Add tasteful, relevant emojis throughout the post.
+5. End with an engaging question or call-to-action to spark discussion.
+6. Include 8 to 12 relevant hashtags on their own line at the very end.
 
 Topic: {topic}
 Description: {description}
 Tone: {tone}
 Post Type: {post_type}
-Target length: {length} ({length_instruction})
+Target length: {length}
 
 Formatting rules:
-- No markdown headers, no asterisks used as bullet markers.
-- Use line breaks between paragraphs the way real LinkedIn posts are formatted.
-- Place the hashtags on their own block at the very end, separated by a blank line.
-- Do not wrap the output in quotes or code blocks.
+- Do not use markdown headers (no # or ##).
+- Do not use asterisks as bullet points.
+- Format with authentic LinkedIn line breaks between paragraphs.
+- Do not wrap output in quotes or code blocks. Return the complete, unabridged post text directly.
 """
 
 
@@ -101,7 +93,7 @@ Formatting rules:
 def index():
     return jsonify({
         "status": "ok",
-        "message": "LinkedIn Post Generator API is running. Open index.html directly in your browser."
+        "message": "LinkedIn Post Generator API is running."
     })
 
 
@@ -132,10 +124,6 @@ def generate():
         return jsonify({"success": False, "error": "Invalid post type selected."}), 400
     if length not in VALID_LENGTHS:
         return jsonify({"success": False, "error": "Invalid length selected."}), 400
-    if len(topic) > 200:
-        return jsonify({"success": False, "error": "Topic is too long (max 200 characters)."}), 400
-    if len(description) > 3000:
-        return jsonify({"success": False, "error": "Description is too long (max 3000 characters)."}), 400
 
     prompt = build_prompt(topic, description, tone, post_type, length)
 
@@ -152,9 +140,9 @@ def generate():
             response = model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.9,
+                    temperature=0.85,
                     top_p=0.95,
-                    max_output_tokens=1024,
+                    max_output_tokens=2048,
                 ),
             )
 
@@ -183,7 +171,6 @@ def generate():
         friendly = f"Something went wrong while generating your post: {message}"
 
     return jsonify({"success": False, "error": friendly}), 502
-
 
 
 @app.errorhandler(404)
