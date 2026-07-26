@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI LinkedIn Post Generator</title>
+<meta name="description" content="Generate polished, ready-to-post LinkedIn updates in seconds with AI." />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+
+<!-- Ambient background layer (signature element: signal aurora + grid) -->
+<div class="bg-layer" aria-hidden="true">
+  <div class="grid-field"></div>
+  <div class="aurora aurora--one"></div>
+  <div class="aurora aurora--two"></div>
+</div>
+
+<!-- ============ NAVBAR ============ -->
+<header class="navbar">
+  <div class="navbar__inner">
+    <a href="#top" class="brand">
+      <span class="brand__mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 18V9M12 18V4M20 18V13" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand__text">PostSignal<span class="brand__accent">.ai</span></span>
+    </a>
+
+    <nav class="navbar__links">
+      <a href="#generator">Generate</a>
+      <a href="#output">Output</a>
+      <a href="#history">History</a>
+    </nav>
+
+    <div class="navbar__actions">
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle dark and light mode" title="Toggle theme">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M12 2.5V5M12 19V21.5M21.5 12H19M5 12H2.5M18.4 5.6L16.7 7.3M7.3 16.7L5.6 18.4M18.4 18.4L16.7 16.7M7.3 7.3L5.6 5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__content">
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Gemini-powered writing assistant</p>
+      <h1 class="hero__title">AI LinkedIn Post Generator</h1>
+      <p class="hero__subtitle">
+        Turn a rough idea into a scroll-stopping LinkedIn post — hook, story, insight
+        and hashtags, tuned to your tone and shaped to your goal.
+      </p>
+
+      <!-- signature waveform divider -->
+      <svg class="signal-wave" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true">
+        <path class="signal-wave__path" d="M0 30 Q 15 8, 30 30 T 60 30 T 90 30 T 120 30 T 150 30 T 180 30 T 210 30 T 240 30 T 270 30 T 300 30 T 330 30 T 360 30 T 390 30 T 420 30 T 450 30 T 480 30 T 510 30 T 540 30 T 570 30 T 600 30" />
+      </svg>
+
+      <div class="hero__cta">
+        <a href="#generator" class="btn btn--primary">
+          Start generating
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#history" class="btn btn--ghost">View history</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GENERATOR FORM ============ -->
+  <section id="generator" class="section">
+    <div class="section__head">
+      <span class="section__eyebrow">01 · Inputs</span>
+      <h2>Describe what you want to say</h2>
+      <p>Give the model context — the more specific your description, the sharper the post.</p>
+    </div>
+
+    <form id="generatorForm" class="card glass form-card" novalidate>
+
+      <div class="field">
+        <label for="topic">Topic</label>
+        <input type="text" id="topic" name="topic" placeholder="e.g. Launching my first open-source library" maxlength="200" required />
+        <span class="field__hint" id="topicCount">0 / 200</span>
+      </div>
+
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4" placeholder="Add the key details — what happened, what you learned, numbers, tools, people to credit…" maxlength="3000" required></textarea>
+        <div class="field__meta">
+          <span id="descChars">0 characters</span>
+          <span id="descWords">0 words</span>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="tone">Tone</label>
+          <div class="select-wrap">
+            <select id="tone" name="tone" required>
+              <option value="Professional" selected>Professional</option>
+              <option value="Casual">Casual</option>
+              <option value="Technical">Technical</option>
+              <option value="Motivational">Motivational</option>
+              <option value="Inspirational">Inspirational</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="postType">Post type</label>
+          <div class="select-wrap">
+            <select id="postType" name="post_type" required>
+              <option value="Project Showcase" selected>Project Showcase</option>
+              <option value="Achievement">Achievement</option>
+              <option value="Internship">Internship</option>
+              <option value="Certification">Certification</option>
+              <option value="Hackathon">Hackathon</option>
+              <option value="Event">Event</option>
+              <option value="Career Update">Career Update</option>
+              <option value="Portfolio">Portfolio</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="length">Length</label>
+          <div class="select-wrap">
+            <select id="length" name="length" required>
+              <option value="Short">Short</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Long">Long</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card__actions">
+        <button type="submit" id="generateBtn" class="btn btn--primary btn--block">
+          <span class="btn__label">Generate post</span>
+          <span class="btn__spinner" aria-hidden="true"></span>
+        </button>
+        <button type="button" id="clearBtn" class="btn btn--outline">Clear</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ OUTPUT ============ -->
+  <section id="output" class="section">
+    <div class="section__head">
+      <span class="section__eyebrow">02 · Output</span>
+      <h2>Your generated post</h2>
+      <p>Copy it, download it, or regenerate until it feels right.</p>
+    </div>
+
+    <div class="card glass output-card">
+      <div id="outputEmpty" class="output-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M4 18V9M12 18V4M20 18V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <p>Nothing generated yet. Fill in the form above and hit <strong>Generate post</strong>.</p>
+      </div>
+
+      <div id="outputResult" class="output-result" hidden>
+        <div class="output-toolbar">
+          <div class="output-counters">
+            <span id="outCharCount">0 characters</span>
+            <span class="dot-sep">·</span>
+            <span id="outWordCount">0 words</span>
+          </div>
+          <div class="output-toolbar__actions">
+            <button type="button" id="copyBtn" class="icon-btn" title="Copy to clipboard">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="1.8"/></svg>
+              Copy
+            </button>
+            <button type="button" id="downloadBtn" class="icon-btn" title="Download as .txt">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Download
+            </button>
+            <button type="button" id="regenerateBtn" class="icon-btn" title="Regenerate">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4v5h5M20 20v-5h-5M4.6 15A8 8 0 0 0 19 9.5M19.4 9A8 8 0 0 0 5 14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Regenerate
+            </button>
+          </div>
+        </div>
+        <pre id="postText" class="output-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section id="history" class="section">
+    <div class="section__head">
+      <span class="section__eyebrow">03 · History</span>
+      <h2>Recent generations</h2>
+      <p>Your last 5 posts, saved locally in this browser.</p>
+    </div>
+
+    <div id="historyEmpty" class="history-empty card glass">
+      <p>No posts yet. Your generated history will show up here.</p>
+    </div>
+
+    <div id="historyList" class="history-list"></div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p>Built with <span class="footer__heart">♥</span> by <strong>Your Name</strong> — powered by Flask &amp; Gemini API.</p>
+    <p class="footer__meta">PostSignal.ai · Portfolio project</p>
+  </div>
+</footer>
+
+<!-- ============ TOASTS ============ -->
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<!-- History item template -->
+<template id="historyItemTemplate">
+  <article class="history-card card glass">
+    <div class="history-card__head">
+      <span class="history-card__type"></span>
+      <span class="history-card__date"></span>
+    </div>
+    <p class="history-card__preview"></p>
+    <div class="history-card__actions">
+      <button type="button" class="history-card__btn" data-action="load">Load</button>
+      <button type="button" class="history-card__btn" data-action="copy">Copy</button>
+      <button type="button" class="history-card__btn history-card__btn--danger" data-action="delete">Delete</button>
+    </div>
+  </article>
+</template>
+
+<script src="static/js/script.js"></script>
+</body>
+</html>
