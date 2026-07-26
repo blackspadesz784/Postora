@@ -34,3 +34,5 @@ build/
 # Ignore secrets
 *.pem
 *.key
+
+.vscode/
